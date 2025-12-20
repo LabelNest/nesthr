@@ -3,23 +3,78 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { RoleProvider } from "@/contexts/RoleContext";
+
+// Pages
+import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
+
+// App Layout
+import { AppLayout } from "./components/layout/AppLayout";
+import DashboardPage from "./pages/DashboardPage";
+import AttendancePage from "./pages/AttendancePage";
+import EfficiencyPage from "./pages/EfficiencyPage";
+import ProfilePage from "./pages/ProfilePage";
+import DocumentsPage from "./pages/DocumentsPage";
+import SalaryPage from "./pages/SalaryPage";
+import MyLeavesPage from "./pages/MyLeavesPage";
+
+// Manager Pages
+import MyTeamPage from "./pages/manager/MyTeamPage";
+import ExpectationsPage from "./pages/manager/ExpectationsPage";
+import TeamEfficiencyPage from "./pages/manager/TeamEfficiencyPage";
+
+// HR Pages
+import EmployeeDirectoryPage from "./pages/hr/EmployeeDirectoryPage";
+import AddEmployeePage from "./pages/hr/AddEmployeePage";
+import ApprovalsPage from "./pages/hr/ApprovalsPage";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <RoleProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Public Landing */}
+            <Route path="/" element={<LandingPage />} />
+            
+            {/* App Routes */}
+            <Route path="/app" element={<AppLayout />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="attendance" element={<AttendancePage />} />
+              <Route path="efficiency" element={<EfficiencyPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="documents" element={<DocumentsPage />} />
+              <Route path="salary" element={<SalaryPage />} />
+              <Route path="leaves" element={<MyLeavesPage />} />
+              
+              {/* Manager Routes */}
+              <Route path="team" element={<MyTeamPage />} />
+              <Route path="team-efficiency" element={<TeamEfficiencyPage />} />
+              <Route path="expectations" element={<ExpectationsPage />} />
+              <Route path="attendance-overview" element={<AttendancePage />} />
+              <Route path="leave-approvals" element={<ApprovalsPage />} />
+              <Route path="probation" element={<DashboardPage />} />
+              <Route path="resignations" element={<DashboardPage />} />
+              
+              {/* HR Routes */}
+              <Route path="directory" element={<EmployeeDirectoryPage />} />
+              <Route path="add-employee" element={<AddEmployeePage />} />
+              <Route path="bulk-upload" element={<DashboardPage />} />
+              <Route path="attendance-control" element={<DashboardPage />} />
+              <Route path="approvals" element={<ApprovalsPage />} />
+              <Route path="settings" element={<DashboardPage />} />
+            </Route>
+            
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </RoleProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
