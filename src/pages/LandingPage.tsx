@@ -61,10 +61,10 @@ const LandingPage = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <Link to="/app">
+            <Link to="/auth">
               <Button variant="ghost">Sign In</Button>
             </Link>
-            <Link to="/app">
+            <Link to="/auth">
               <Button variant="landing" size="lg">Sign Up</Button>
             </Link>
           </div>
@@ -88,7 +88,7 @@ const LandingPage = () => {
               </div>
 
               <div className="flex flex-wrap gap-4">
-                <Link to="/app">
+                <Link to="/auth">
                   <Button variant="landing" size="xl" className="gap-2">
                     Get Started <ArrowRight className="w-5 h-5" />
                   </Button>

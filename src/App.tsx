@@ -4,10 +4,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { RoleProvider } from "@/contexts/RoleContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
+import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // App Layout
 import { AppLayout } from "./components/layout/AppLayout";
@@ -39,17 +42,20 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <RoleProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public Landing */}
-            <Route path="/" element={<LandingPage />} />
-            
-            {/* App Routes */}
-            <Route path="/app" element={<AppLayout />}>
-              <Route index element={<DashboardPage />} />
+      <AuthProvider>
+        <RoleProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              
+              {/* Protected App Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/app" element={<AppLayout />}>
+                  <Route index element={<DashboardPage />} />
               <Route path="attendance" element={<AttendancePage />} />
               <Route path="efficiency" element={<EfficiencyPage />} />
               <Route path="profile" element={<ProfilePage />} />
@@ -74,8 +80,9 @@ const App = () => (
               <Route path="onboarding" element={<OnboardingPage />} />
               <Route path="offboarding" element={<OffboardingPage />} />
               <Route path="attendance-control" element={<AttendancePage />} />
-              <Route path="approvals" element={<ApprovalsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
+                <Route path="approvals" element={<ApprovalsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
             </Route>
             
             {/* Catch-all */}
@@ -83,8 +90,9 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </RoleProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+    </AuthProvider>
+  </TooltipProvider>
+</QueryClientProvider>
 );
 
 export default App;
