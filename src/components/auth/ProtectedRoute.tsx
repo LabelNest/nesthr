@@ -10,6 +10,7 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { user, employee, loading } = useAuth();
   const location = useLocation();
 
+  // Wait for loading to complete before making any decisions
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -26,13 +27,20 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     );
   }
 
-  if (!user || !employee) {
+  // Not authenticated - redirect to login
+  if (!user) {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  // Authenticated but no employee record - should not happen if login flow works correctly
+  // but handle it gracefully
+  if (!employee) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // Check role-based access
   if (allowedRoles && allowedRoles.length > 0) {
-    if (!allowedRoles.includes(employee.role as AppRole)) {
+    if (!allowedRoles.includes(employee.role)) {
       // Redirect to appropriate page based on their actual role
       switch (employee.role) {
         case 'Admin':

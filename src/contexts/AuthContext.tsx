@@ -24,7 +24,7 @@ interface AuthContextType {
   role: AppRole | null;
   orgId: string | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null; redirectPath?: string }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -41,18 +41,6 @@ export const useAuth = () => {
 interface AuthProviderProps {
   children: ReactNode;
 }
-
-const getRedirectPath = (role: AppRole): string => {
-  switch (role) {
-    case 'Admin':
-      return '/app/directory';
-    case 'Manager':
-      return '/app/team';
-    case 'Employee':
-    default:
-      return '/app';
-  }
-};
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
@@ -76,24 +64,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      (event, currentSession) => {
+        if (!mounted) return;
+
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
         
-        // Defer Supabase calls with setTimeout
-        if (session?.user) {
+        // Defer Supabase calls with setTimeout to prevent deadlocks
+        if (currentSession?.user) {
           setTimeout(async () => {
-            const emp = await fetchEmployee(session.user.id);
-            if (emp) {
+            if (!mounted) return;
+            const emp = await fetchEmployee(currentSession.user.id);
+            if (mounted) {
               setEmployee(emp);
-            } else {
-              // No employee record - sign out
-              setEmployee(null);
-              await supabase.auth.signOut();
+              setLoading(false);
             }
-            setLoading(false);
           }, 0);
         } else {
           setEmployee(null);
@@ -103,28 +92,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(async ({ data: { session: existingSession } }) => {
+      if (!mounted) return;
+
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
       
-      if (session?.user) {
-        const emp = await fetchEmployee(session.user.id);
-        if (emp) {
+      if (existingSession?.user) {
+        const emp = await fetchEmployee(existingSession.user.id);
+        if (mounted) {
           setEmployee(emp);
-        } else {
-          // No employee record - sign out
-          setEmployee(null);
-          await supabase.auth.signOut();
         }
       }
-      setLoading(false);
+      if (mounted) {
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const signIn = async (email: string, password: string): Promise<{ error: Error | null; redirectPath?: string }> => {
-    const { data, error } = await supabase.auth.signInWithPassword({
+  const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -133,35 +125,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return { error: error as Error };
     }
 
-    if (!data.user) {
-      return { error: new Error('Login failed') };
-    }
-
-    // Fetch employee record
-    const emp = await fetchEmployee(data.user.id);
-    
-    if (!emp) {
-      // No employee record - sign out and return error
-      await supabase.auth.signOut();
-      return { error: new Error('You are not onboarded. Please contact HR.') };
-    }
-
-    setEmployee(emp);
-    const redirectPath = getRedirectPath(emp.role as AppRole);
-    
-    return { error: null, redirectPath };
+    return { error: null };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
     setEmployee(null);
+    await supabase.auth.signOut();
   };
 
   const value = {
     user,
     session,
     employee,
-    role: employee?.role as AppRole | null,
+    role: employee?.role ?? null,
     orgId: employee?.org_id ?? null,
     loading,
     signIn,

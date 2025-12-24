@@ -14,38 +14,54 @@ const loginSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
+const getRedirectPath = (role: string): string => {
+  switch (role) {
+    case 'Admin':
+      return '/app/directory';
+    case 'Manager':
+      return '/app/team';
+    default:
+      return '/app';
+  }
+};
+
 const AuthPage = () => {
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loginError, setLoginError] = useState<string | null>(null);
   
-  const { signIn, user, employee } = useAuth();
+  const { signIn, signOut, user, employee, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Redirect when both user and employee are available
   useEffect(() => {
-    if (user && employee) {
-      // Redirect based on role
-      switch (employee.role) {
-        case 'Admin':
-          navigate('/app/directory');
-          break;
-        case 'Manager':
-          navigate('/app/team');
-          break;
-        default:
-          navigate('/app');
-      }
+    if (!loading && user && employee) {
+      const redirectPath = getRedirectPath(employee.role);
+      toast({
+        title: 'Welcome back!',
+        description: 'You have been logged in successfully.',
+      });
+      navigate(redirectPath, { replace: true });
     }
-  }, [user, employee, navigate]);
+  }, [loading, user, employee, navigate, toast]);
+
+  // Handle case where user exists but employee doesn't (not onboarded)
+  useEffect(() => {
+    if (!loading && user && !employee) {
+      setLoginError('You are not onboarded. Please contact HR.');
+      signOut();
+    }
+  }, [loading, user, employee, signOut]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user types
+    setLoginError(null);
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -54,7 +70,8 @@ const AuthPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    setLoading(true);
+    setLoginError(null);
+    setSubmitting(true);
 
     try {
       const validation = loginSchema.safeParse({
@@ -70,47 +87,36 @@ const AuthPage = () => {
           }
         });
         setErrors(fieldErrors);
-        setLoading(false);
+        setSubmitting(false);
         return;
       }
 
-      const { error, redirectPath } = await signIn(formData.email, formData.password);
+      const { error } = await signIn(formData.email, formData.password);
       
       if (error) {
-        if (error.message.includes('not onboarded')) {
-          toast({
-            title: 'Access Denied',
-            description: 'You are not onboarded. Please contact HR.',
-            variant: 'destructive',
-          });
-        } else if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: 'Login Failed',
-            description: 'Invalid email or password. Please try again.',
-            variant: 'destructive',
-          });
+        if (error.message.includes('Invalid login credentials')) {
+          setLoginError('Invalid email or password. Please try again.');
         } else {
-          toast({
-            title: 'Login Failed',
-            description: error.message,
-            variant: 'destructive',
-          });
+          setLoginError(error.message);
         }
-      } else {
         toast({
-          title: 'Welcome back!',
-          description: 'You have been logged in successfully.',
+          title: 'Login Failed',
+          description: error.message.includes('Invalid login credentials') 
+            ? 'Invalid email or password.' 
+            : error.message,
+          variant: 'destructive',
         });
-        navigate(redirectPath || '/app');
       }
+      // Redirect will happen via useEffect when employee data loads
     } catch (error) {
+      setLoginError('An unexpected error occurred. Please try again.');
       toast({
         title: 'Error',
         description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -150,6 +156,12 @@ const AuthPage = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {loginError && (
+                  <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                    <p className="text-sm text-destructive">{loginError}</p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -160,7 +172,7 @@ const AuthPage = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     className={errors.email ? 'border-destructive' : ''}
-                    disabled={loading}
+                    disabled={submitting}
                   />
                   {errors.email && (
                     <p className="text-sm text-destructive">{errors.email}</p>
@@ -177,7 +189,7 @@ const AuthPage = () => {
                     value={formData.password}
                     onChange={handleInputChange}
                     className={errors.password ? 'border-destructive' : ''}
-                    disabled={loading}
+                    disabled={submitting}
                   />
                   {errors.password && (
                     <p className="text-sm text-destructive">{errors.password}</p>
@@ -187,9 +199,9 @@ const AuthPage = () => {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={loading}
+                  disabled={submitting}
                 >
-                  {loading ? (
+                  {submitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Signing In...
