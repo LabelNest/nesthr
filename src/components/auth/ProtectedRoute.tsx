@@ -1,0 +1,31 @@
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
+
+const ProtectedRoute = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-lg">N</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <span className="text-muted-foreground">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return <Outlet />;
+};
+
+export default ProtectedRoute;

@@ -1,4 +1,5 @@
 import { useRole } from '@/contexts/RoleContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Role } from '@/data/mockData';
 import {
   Select,
@@ -7,9 +8,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface TopBarProps {
   title?: string;
@@ -17,6 +20,18 @@ interface TopBarProps {
 
 export const TopBar: React.FC<TopBarProps> = ({ title }) => {
   const { currentRole, setCurrentRole } = useRole();
+  const { signOut, user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    await signOut();
+    toast({
+      title: 'Signed out',
+      description: 'You have been logged out successfully.',
+    });
+    navigate('/auth');
+  };
 
   const roleLabels: Record<Role, string> = {
     hr: 'HR / Admin',
@@ -64,6 +79,16 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
             </SelectContent>
           </Select>
         </div>
+
+        {/* Logout Button */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleLogout}
+          title="Sign out"
+        >
+          <LogOut className="w-5 h-5" />
+        </Button>
       </div>
     </header>
   );
