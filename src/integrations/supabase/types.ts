@@ -682,6 +682,192 @@ export type Database = {
           },
         ]
       }
+      hr_offboarding: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          employee_id: string
+          exit_interview_completed: boolean | null
+          exit_interview_notes: string | null
+          exit_reason: string | null
+          exit_type: string | null
+          id: string
+          initiated_at: string | null
+          initiated_by: string
+          last_working_day: string | null
+          resignation_date: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          employee_id: string
+          exit_interview_completed?: boolean | null
+          exit_interview_notes?: string | null
+          exit_reason?: string | null
+          exit_type?: string | null
+          id?: string
+          initiated_at?: string | null
+          initiated_by: string
+          last_working_day?: string | null
+          resignation_date?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          employee_id?: string
+          exit_interview_completed?: boolean | null
+          exit_interview_notes?: string | null
+          exit_reason?: string | null
+          exit_type?: string | null
+          id?: string
+          initiated_at?: string | null
+          initiated_by?: string
+          last_working_day?: string | null
+          resignation_date?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_offboarding_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_offboarding_initiated_by_fkey"
+            columns: ["initiated_by"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_offboarding_tasks: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          notes: string | null
+          offboarding_id: string
+          status: string
+          task_category: string
+          task_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          offboarding_id: string
+          status?: string
+          task_category: string
+          task_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          offboarding_id?: string
+          status?: string
+          task_category?: string
+          task_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_offboarding_tasks_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_offboarding_tasks_offboarding_id_fkey"
+            columns: ["offboarding_id"]
+            isOneToOne: false
+            referencedRelation: "hr_offboarding"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_onboarding_tasks: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          employee_id: string
+          id: string
+          notes: string | null
+          status: string
+          task_category: string
+          task_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by: string
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          employee_id: string
+          id?: string
+          notes?: string | null
+          status?: string
+          task_category: string
+          task_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          employee_id?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          task_category?: string
+          task_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_onboarding_tasks_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_onboarding_tasks_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string | null
