@@ -32,6 +32,20 @@ interface RegularizationRequest {
 
 const STATUS_OPTIONS = ['Present', 'Half Day', 'On Leave'];
 
+// Format snake_case to Title Case for display
+const formatStatusDisplay = (status: string): string => {
+  const displayMap: Record<string, string> = {
+    'present': 'Present',
+    'half_day': 'Half Day',
+    'on_leave': 'On Leave',
+    'absent': 'Absent',
+    'no_record': 'No Record',
+    'holiday': 'Holiday',
+    'week_off': 'Week Off',
+  };
+  return displayMap[status] || status;
+};
+
 const statusColors: Record<string, string> = {
   'Pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
   'Approved': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
@@ -44,9 +58,16 @@ const attendanceStatusColors: Record<string, string> = {
   'absent': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
   'Absent': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
   'partial': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+  'half_day': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
   'Half Day': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+  'on_leave': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
   'On Leave': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+  'no_record': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
   'No Record': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
+  'holiday': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  'Holiday': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  'week_off': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
+  'Week Off': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
 };
 
 const AttendanceRegularizationPage = () => {
@@ -194,13 +215,17 @@ const AttendanceRegularizationPage = () => {
 
     setSubmitting(true);
     try {
+      // Format status to lowercase snake_case for database
+      const formattedRequestedStatus = requestedStatus.toLowerCase().replace(/\s+/g, '_');
+      const formattedCurrentStatus = currentStatus.toLowerCase().replace(/\s+/g, '_');
+
       const { error } = await supabase
         .from('hr_attendance_regularization_requests')
         .insert({
           employee_id: employee.id,
           attendance_date: format(selectedDate, 'yyyy-MM-dd'),
-          current_status: currentStatus,
-          requested_status: requestedStatus,
+          current_status: formattedCurrentStatus,
+          requested_status: formattedRequestedStatus,
           reason,
           status: 'Pending',
         });
@@ -395,12 +420,12 @@ const AttendanceRegularizationPage = () => {
                       </TableCell>
                       <TableCell>
                         <Badge className={attendanceStatusColors[request.current_status] || 'bg-gray-100'}>
-                          {request.current_status}
+                          {formatStatusDisplay(request.current_status)}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge className={attendanceStatusColors[request.requested_status] || 'bg-gray-100'}>
-                          {request.requested_status}
+                          {formatStatusDisplay(request.requested_status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate">
@@ -448,7 +473,7 @@ const AttendanceRegularizationPage = () => {
                   <Label className="text-muted-foreground">Current Status</Label>
                   <div className="mt-1">
                     <Badge className={attendanceStatusColors[viewRequest.current_status]}>
-                      {viewRequest.current_status}
+                      {formatStatusDisplay(viewRequest.current_status)}
                     </Badge>
                   </div>
                 </div>
@@ -456,7 +481,7 @@ const AttendanceRegularizationPage = () => {
                   <Label className="text-muted-foreground">Requested Status</Label>
                   <div className="mt-1">
                     <Badge className={attendanceStatusColors[viewRequest.requested_status]}>
-                      {viewRequest.requested_status}
+                      {formatStatusDisplay(viewRequest.requested_status)}
                     </Badge>
                   </div>
                 </div>
