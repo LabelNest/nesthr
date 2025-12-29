@@ -17,13 +17,14 @@ import DashboardPage from "./pages/DashboardPage";
 import AttendancePage from "./pages/AttendancePage";
 import ProfilePage from "./pages/ProfilePage";
 import DocumentsPage from "./pages/DocumentsPage";
-import SalaryPage from "./pages/SalaryPage";
+import MySalaryPage from "./pages/MySalaryPage";
 import MyLeavesPage from "./pages/MyLeavesPage";
 import ContactsPage from "./pages/ContactsPage";
 import HolidaysPage from "./pages/HolidaysPage";
 import MyOnboardingPage from "./pages/MyOnboardingPage";
 import MyOffboardingPage from "./pages/MyOffboardingPage";
 import AttendanceRegularizationPage from "./pages/AttendanceRegularizationPage";
+import AnnouncementsPage from "./pages/AnnouncementsPage";
 
 // Manager Pages
 import MyTeamPage from "./pages/manager/MyTeamPage";
@@ -37,6 +38,7 @@ import OnboardingPage from "./pages/hr/OnboardingPage";
 import OffboardingPage from "./pages/hr/OffboardingPage";
 import SettingsPage from "./pages/hr/SettingsPage";
 import AttendanceRegularizationAdminPage from "./pages/hr/AttendanceRegularizationAdminPage";
+import SalaryOverviewPage from "./pages/hr/SalaryOverviewPage";
 
 const queryClient = new QueryClient();
 
@@ -59,13 +61,14 @@ const App = () => (
                 <Route path="attendance" element={<AttendancePage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="documents" element={<DocumentsPage />} />
-                <Route path="salary" element={<SalaryPage />} />
+                <Route path="salary" element={<MySalaryPage />} />
                 <Route path="leaves" element={<MyLeavesPage />} />
                 <Route path="contacts" element={<ContactsPage />} />
                 <Route path="holidays" element={<HolidaysPage />} />
                 <Route path="my-onboarding" element={<MyOnboardingPage />} />
                 <Route path="my-offboarding" element={<MyOffboardingPage />} />
                 <Route path="attendance-regularization" element={<AttendanceRegularizationPage />} />
+                <Route path="announcements" element={<AnnouncementsPage />} />
               </Route>
             </Route>
             
@@ -88,6 +91,7 @@ const App = () => (
                 <Route path="approvals" element={<ApprovalsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="admin/attendance-regularization" element={<AttendanceRegularizationAdminPage />} />
+                <Route path="admin/salary-overview" element={<SalaryOverviewPage />} />
               </Route>
             </Route>
             
