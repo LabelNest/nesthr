@@ -35,6 +35,20 @@ interface RegularizationRequest {
   };
 }
 
+// Format snake_case to Title Case for display
+const formatStatusDisplay = (status: string): string => {
+  const displayMap: Record<string, string> = {
+    'present': 'Present',
+    'half_day': 'Half Day',
+    'on_leave': 'On Leave',
+    'absent': 'Absent',
+    'no_record': 'No Record',
+    'holiday': 'Holiday',
+    'week_off': 'Week Off',
+  };
+  return displayMap[status] || status;
+};
+
 const statusColors: Record<string, string> = {
   'Pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
   'Approved': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
@@ -47,9 +61,16 @@ const attendanceStatusColors: Record<string, string> = {
   'absent': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
   'Absent': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
   'partial': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+  'half_day': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
   'Half Day': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+  'on_leave': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
   'On Leave': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+  'no_record': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
   'No Record': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
+  'holiday': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  'Holiday': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  'week_off': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
+  'Week Off': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
 };
 
 const AttendanceRegularizationAdminPage = () => {
@@ -114,42 +135,22 @@ const AttendanceRegularizationAdminPage = () => {
 
     setProcessing(true);
     try {
-      // Ensure the attendance status matches DB constraints
-      const VALID_ATTENDANCE_STATUSES = [
-        'Present',
-        'Absent',
-        'Half Day',
-        'On Leave',
-        'Holiday',
-        'Week Off',
-      ] as const;
-
-      const normalizeAttendanceStatus = (value: string) => {
-        const trimmed = (value || '').trim();
-        if (VALID_ATTENDANCE_STATUSES.includes(trimmed as any)) return trimmed;
-
-        const lower = trimmed.toLowerCase();
-        const mapped: Record<string, (typeof VALID_ATTENDANCE_STATUSES)[number]> = {
-          present: 'Present',
-          absent: 'Absent',
-          'half day': 'Half Day',
-          halfday: 'Half Day',
-          partial: 'Half Day',
-          leave: 'On Leave',
-          'on leave': 'On Leave',
-          holiday: 'Holiday',
-          'week off': 'Week Off',
-          weekoff: 'Week Off',
-        };
-
-        return mapped[lower] || trimmed;
+      // Map lowercase snake_case status to Title Case for hr_attendance table
+      const STATUS_MAP: Record<string, string> = {
+        'present': 'Present',
+        'absent': 'Absent',
+        'half_day': 'Half Day',
+        'on_leave': 'On Leave',
+        'holiday': 'Holiday',
+        'week_off': 'Week Off',
       };
 
-      const dbStatus = normalizeAttendanceStatus(selectedRequest.requested_status);
+      const requestedStatus = selectedRequest.requested_status.toLowerCase().replace(/\s+/g, '_');
+      const dbStatus = STATUS_MAP[requestedStatus];
 
-      if (!VALID_ATTENDANCE_STATUSES.includes(dbStatus as any)) {
+      if (!dbStatus) {
         throw new Error(
-          `Invalid attendance status: "${selectedRequest.requested_status}". Allowed: ${VALID_ATTENDANCE_STATUSES.join(', ')}`
+          `Invalid attendance status: "${selectedRequest.requested_status}". Allowed: present, half_day, on_leave`
         );
       }
 
@@ -386,12 +387,12 @@ const AttendanceRegularizationAdminPage = () => {
                       </TableCell>
                       <TableCell>
                         <Badge className={attendanceStatusColors[request.current_status] || 'bg-gray-100'}>
-                          {request.current_status}
+                          {formatStatusDisplay(request.current_status)}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge className={attendanceStatusColors[request.requested_status] || 'bg-gray-100'}>
-                          {request.requested_status}
+                          {formatStatusDisplay(request.requested_status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate">
@@ -470,13 +471,13 @@ const AttendanceRegularizationAdminPage = () => {
                 <div>
                   <Label className="text-muted-foreground text-xs">Current Status</Label>
                   <Badge className={attendanceStatusColors[selectedRequest.current_status]}>
-                    {selectedRequest.current_status}
+                    {formatStatusDisplay(selectedRequest.current_status)}
                   </Badge>
                 </div>
                 <div>
                   <Label className="text-muted-foreground text-xs">Will Change To</Label>
                   <Badge className={attendanceStatusColors[selectedRequest.requested_status]}>
-                    {selectedRequest.requested_status}
+                    {formatStatusDisplay(selectedRequest.requested_status)}
                   </Badge>
                 </div>
               </div>
@@ -518,7 +519,7 @@ const AttendanceRegularizationAdminPage = () => {
             <div className="space-y-4">
               <div className="p-4 bg-muted rounded-lg">
                 <p className="text-sm"><strong>Date:</strong> {format(new Date(selectedRequest.attendance_date), 'MMMM d, yyyy')}</p>
-                <p className="text-sm mt-1"><strong>Requested Change:</strong> {selectedRequest.current_status} → {selectedRequest.requested_status}</p>
+                <p className="text-sm mt-1"><strong>Requested Change:</strong> {formatStatusDisplay(selectedRequest.current_status)} → {formatStatusDisplay(selectedRequest.requested_status)}</p>
               </div>
               <div>
                 <Label className="text-muted-foreground text-xs">Employee's Reason</Label>
@@ -569,7 +570,7 @@ const AttendanceRegularizationAdminPage = () => {
                   <Label className="text-muted-foreground">Current Status</Label>
                   <div className="mt-1">
                     <Badge className={attendanceStatusColors[selectedRequest.current_status]}>
-                      {selectedRequest.current_status}
+                      {formatStatusDisplay(selectedRequest.current_status)}
                     </Badge>
                   </div>
                 </div>
@@ -577,7 +578,7 @@ const AttendanceRegularizationAdminPage = () => {
                   <Label className="text-muted-foreground">Requested Status</Label>
                   <div className="mt-1">
                     <Badge className={attendanceStatusColors[selectedRequest.requested_status]}>
-                      {selectedRequest.requested_status}
+                      {formatStatusDisplay(selectedRequest.requested_status)}
                     </Badge>
                   </div>
                 </div>
