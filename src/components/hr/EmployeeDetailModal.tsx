@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -73,7 +72,7 @@ export const EmployeeDetailModal = ({
   isAdmin,
   onUpdate,
 }: EmployeeDetailModalProps) => {
-  const navigate = useNavigate();
+  // Removed navigate - editing now happens via modal in parent component
   const [loading, setLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>([]);
@@ -293,15 +292,6 @@ export const EmployeeDetailModal = ({
 
           {isAdmin && (
             <DialogFooter className="gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  onOpenChange(false);
-                  navigate(`/app/edit-employee/${employee.id}`);
-                }}
-              >
-                Edit
-              </Button>
               <Button
                 variant={employee.status === 'Active' ? 'secondary' : 'default'}
                 onClick={handleToggleStatus}
