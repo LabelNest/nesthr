@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { UserPlus, CalendarIcon, User, Briefcase, MapPin, Phone, Loader2 } from 'lucide-react';
+import { UserPlus, CalendarIcon, User, Briefcase, MapPin, Phone, Loader2, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -329,9 +329,18 @@ const AddEmployeePage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">Add Employee</h1>
-        <p className="text-muted-foreground">Create a new employee record with login credentials</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground">Add Employee</h1>
+          <p className="text-muted-foreground">Create a new employee record with login credentials</p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/app/bulk-upload')}
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Bulk Upload CSV
+        </Button>
       </div>
 
       <Card className="max-w-4xl p-6 glass-card">
