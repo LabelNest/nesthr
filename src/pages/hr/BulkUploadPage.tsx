@@ -443,7 +443,7 @@ Jane Smith,jane.smith@labelnest.in,LNI100,Employee,NestHQ,HR Executive,,25-01-20
           <h1 className="text-2xl font-display font-bold text-foreground">Bulk Upload Employees</h1>
           <p className="text-muted-foreground">Import multiple employees at once using CSV files</p>
         </div>
-        <Button variant="outline" onClick={() => navigate('/hr/employees/add')}>
+        <Button variant="outline" onClick={() => navigate('/app/add-employee')}>
           <Users className="w-4 h-4 mr-2" />
           Add Single Employee
         </Button>
