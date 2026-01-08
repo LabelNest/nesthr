@@ -599,6 +599,7 @@ export type Database = {
       hr_employee_details: {
         Row: {
           address: string | null
+          birthday_celebrated_on: string | null
           created_at: string | null
           date_of_birth: string | null
           department: string | null
@@ -608,6 +609,7 @@ export type Database = {
           emergency_contact_relationship: string | null
           employee_id: string
           employment_type: string | null
+          gender: string | null
           id: string
           location: string | null
           phone: string | null
@@ -615,6 +617,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          birthday_celebrated_on?: string | null
           created_at?: string | null
           date_of_birth?: string | null
           department?: string | null
@@ -624,6 +627,7 @@ export type Database = {
           emergency_contact_relationship?: string | null
           employee_id: string
           employment_type?: string | null
+          gender?: string | null
           id?: string
           location?: string | null
           phone?: string | null
@@ -631,6 +635,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          birthday_celebrated_on?: string | null
           created_at?: string | null
           date_of_birth?: string | null
           department?: string | null
@@ -640,6 +645,7 @@ export type Database = {
           emergency_contact_relationship?: string | null
           employee_id?: string
           employment_type?: string | null
+          gender?: string | null
           id?: string
           location?: string | null
           phone?: string | null
@@ -1049,104 +1055,47 @@ export type Database = {
           },
         ]
       }
-      hr_onboarding_task_templates: {
-        Row: {
-          category: string | null
-          created_at: string | null
-          id: string
-          is_mandatory: boolean | null
-          org_id: string
-          task_description: string | null
-          task_order: number | null
-          task_title: string
-          updated_at: string | null
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string | null
-          id?: string
-          is_mandatory?: boolean | null
-          org_id: string
-          task_description?: string | null
-          task_order?: number | null
-          task_title: string
-          updated_at?: string | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string | null
-          id?: string
-          is_mandatory?: boolean | null
-          org_id?: string
-          task_description?: string | null
-          task_order?: number | null
-          task_title?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "hr_onboarding_task_templates_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       hr_onboarding_tasks: {
         Row: {
-          assigned_at: string | null
-          assigned_by: string
+          category: string
           completed_at: string | null
           created_at: string | null
-          description: string | null
-          due_date: string | null
+          document_url: string | null
           employee_id: string
           id: string
-          notes: string | null
-          status: string
-          task_category: string
-          task_name: string
-          updated_at: string | null
+          is_mandatory: boolean | null
+          status: string | null
+          task_description: string | null
+          task_order: number
+          task_title: string
         }
         Insert: {
-          assigned_at?: string | null
-          assigned_by: string
+          category: string
           completed_at?: string | null
           created_at?: string | null
-          description?: string | null
-          due_date?: string | null
+          document_url?: string | null
           employee_id: string
           id?: string
-          notes?: string | null
-          status?: string
-          task_category: string
-          task_name: string
-          updated_at?: string | null
+          is_mandatory?: boolean | null
+          status?: string | null
+          task_description?: string | null
+          task_order: number
+          task_title: string
         }
         Update: {
-          assigned_at?: string | null
-          assigned_by?: string
+          category?: string
           completed_at?: string | null
           created_at?: string | null
-          description?: string | null
-          due_date?: string | null
+          document_url?: string | null
           employee_id?: string
           id?: string
-          notes?: string | null
-          status?: string
-          task_category?: string
-          task_name?: string
-          updated_at?: string | null
+          is_mandatory?: boolean | null
+          status?: string | null
+          task_description?: string | null
+          task_order?: number
+          task_title?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "hr_onboarding_tasks_assigned_by_fkey"
-            columns: ["assigned_by"]
-            isOneToOne: false
-            referencedRelation: "hr_employees"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "hr_onboarding_tasks_employee_id_fkey"
             columns: ["employee_id"]
@@ -1643,10 +1592,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      assign_default_onboarding_tasks: {
-        Args: { p_employee_id: string }
-        Returns: undefined
-      }
       generate_employee_code: { Args: { org_uuid: string }; Returns: string }
       user_employee_id: { Args: never; Returns: string }
       user_role: { Args: never; Returns: string }

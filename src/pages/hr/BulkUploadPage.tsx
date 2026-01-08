@@ -21,12 +21,14 @@ interface CSVRow {
   role: string;
   department: string;
   designation?: string;
+  gender?: string;
   manager_email?: string;
   joining_date?: string;
   phone?: string;
   location?: string;
   employment_type?: string;
   date_of_birth?: string;
+  birthday_celebrated_on?: string;
   address?: string;
 }
 
@@ -311,6 +313,15 @@ const BulkUploadPage = () => {
       }
       
       // Step 3: Create hr_employee_details
+      let birthdayDate: string | null = null;
+      if (row.birthday_celebrated_on?.trim()) {
+        try {
+          birthdayDate = parseDDMMYYYY(row.birthday_celebrated_on);
+        } catch (e) {
+          // Invalid date, skip
+        }
+      }
+
       await supabase
         .from('hr_employee_details')
         .insert({
@@ -321,11 +332,13 @@ const BulkUploadPage = () => {
           location: row.location || null,
           employment_type: row.employment_type || 'Full-time',
           date_of_birth: dateOfBirth,
+          birthday_celebrated_on: birthdayDate,
+          gender: row.gender || null,
           address: row.address || null
         });
       
       // Step 4: Auto-assign onboarding tasks using database function
-      const { error: taskError } = await supabase.rpc(
+      const { error: taskError } = await (supabase.rpc as any)(
         'assign_default_onboarding_tasks',
         { p_employee_id: newEmployee.id }
       );
@@ -407,10 +420,10 @@ const BulkUploadPage = () => {
   };
 
   const downloadTemplate = () => {
-    const template = `full_name,email,employee_code,role,department,designation,manager_email,joining_date,phone,location,employment_type,date_of_birth,address
-Snehal Singh,,,Employee,NestOps,Software Engineer,manager@labelnest.in,15-01-2026,9876543210,Visakhapatnam,Full-time,20-05-1995,123 Street
-Rahul Sharma,,,Manager,NestTech,Team Lead,,20-01-2026,9876543211,Hyderabad,Full-time,15-08-1996,456 Avenue
-Jane Smith,jane.smith@labelnest.in,LNI100,Employee,NestHQ,HR Executive,,25-01-2026,9876543212,Mumbai,Full-time,10-03-1994,789 Road`;
+    const template = `full_name,email,employee_code,role,department,designation,gender,manager_email,joining_date,phone,location,employment_type,date_of_birth,birthday_celebrated_on,address
+Snehal Singh,,,Employee,NestOps,Software Engineer,Male,manager@labelnest.in,15-01-2026,9876543210,Visakhapatnam,Full-time,20-05-1995,,123 Street
+Rahul Sharma,,,Manager,NestTech,Team Lead,Male,,20-01-2026,9876543211,Hyderabad,Full-time,15-08-1996,,456 Avenue
+Jane Smith,jane.smith@labelnest.in,LNI100,Employee,NestHQ,HR Executive,Female,,25-01-2026,9876543212,Mumbai,Full-time,10-03-1994,15-08-1994,789 Road`;
     
     const blob = new Blob([template], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
