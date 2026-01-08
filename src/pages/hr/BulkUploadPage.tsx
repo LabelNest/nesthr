@@ -266,18 +266,21 @@ const BulkUploadPage = () => {
       managerId = manager?.id || null;
     }
     
-    // Step 1: Create Supabase auth account via edge function
-    const { data: authData, error: authError } = await supabase.functions.invoke('admin-manage-user', {
-      body: {
-        action: 'create',
-        email: email,
-        password: employeeCode, // Password = employee code
-        full_name: row.full_name
+    // Step 1: Create Supabase auth account via client-side signUp
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: email,
+      password: employeeCode, // Password = employee code
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: {
+          full_name: row.full_name,
+          employee_code: employeeCode
+        }
       }
     });
     
-    if (authError || authData?.error) {
-      throw new Error(authData?.error || authError?.message || 'Auth creation failed');
+    if (authError) {
+      throw new Error(`Auth creation failed: ${authError.message}`);
     }
     
     const userId = authData.user?.id;
@@ -305,10 +308,8 @@ const BulkUploadPage = () => {
         .single();
       
       if (empError) {
-        // Rollback: Delete auth user
-        await supabase.functions.invoke('admin-manage-user', {
-          body: { action: 'delete', user_id: userId }
-        });
+        // Note: Cannot delete auth user from client-side
+        console.error('Employee creation failed, auth user may be orphaned:', userId);
         throw new Error(`Employee record creation failed: ${empError.message}`);
       }
       
@@ -365,10 +366,8 @@ const BulkUploadPage = () => {
       }
       
     } catch (error) {
-      // Rollback: Delete auth user on any failure
-      await supabase.functions.invoke('admin-manage-user', {
-        body: { action: 'delete', user_id: userId }
-      });
+      // Note: Cannot delete auth user from client-side on failure
+      console.error('Employee setup failed, auth user may be orphaned:', userId);
       throw error;
     }
   };
