@@ -36,6 +36,8 @@ interface EmployeeWithDetails {
   designation: string | null;
   phone: string | null;
   date_of_birth: string | null;
+  birthday_celebrated_on?: string | null;
+  gender?: string | null;
   employment_type: string | null;
   location: string | null;
   address: string | null;
@@ -61,6 +63,7 @@ const ROLES = ['Admin', 'Manager', 'Employee'];
 const STATUSES = ['Active', 'Inactive', 'Pending', 'Resigned', 'Abscond', 'Terminated'];
 const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract'];
 const RELATIONSHIPS = ['Spouse', 'Parent', 'Sibling', 'Friend', 'Other'];
+const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
 
 export const EditEmployeeModal = ({
   employee,
@@ -83,6 +86,8 @@ export const EditEmployeeModal = ({
     manager_id: '',
     joining_date: '',
     date_of_birth: '',
+    birthday_celebrated_on: '',
+    gender: '',
     address: '',
     emergency_contact_name: '',
     emergency_contact_phone: '',
@@ -104,6 +109,8 @@ export const EditEmployeeModal = ({
         manager_id: employee.manager_id || '',
         joining_date: employee.joining_date || '',
         date_of_birth: employee.date_of_birth || '',
+        birthday_celebrated_on: employee.birthday_celebrated_on || '',
+        gender: employee.gender || '',
         address: employee.address || '',
         emergency_contact_name: employee.emergency_contact_name || '',
         emergency_contact_phone: employee.emergency_contact_phone || '',
@@ -182,6 +189,8 @@ export const EditEmployeeModal = ({
         location: formData.location || null,
         employment_type: formData.employment_type || null,
         date_of_birth: formData.date_of_birth || null,
+        birthday_celebrated_on: formData.birthday_celebrated_on || null,
+        gender: formData.gender || null,
         address: formData.address || null,
         emergency_contact_name: formData.emergency_contact_name || null,
         emergency_contact_phone: formData.emergency_contact_phone || null,
@@ -385,6 +394,30 @@ export const EditEmployeeModal = ({
                   onChange={(e) => handleChange('date_of_birth', e.target.value)}
                   disabled={loading}
                 />
+              </div>
+              <div>
+                <Label htmlFor="birthday_celebrated_on">Birthday Celebrated On</Label>
+                <Input
+                  id="birthday_celebrated_on"
+                  type="date"
+                  value={formData.birthday_celebrated_on}
+                  onChange={(e) => handleChange('birthday_celebrated_on', e.target.value)}
+                  disabled={loading}
+                />
+                <p className="text-xs text-muted-foreground mt-1">If different from DOB</p>
+              </div>
+              <div>
+                <Label htmlFor="gender">Gender</Label>
+                <Select value={formData.gender} onValueChange={(v) => handleChange('gender', v)} disabled={loading}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENDERS.map(g => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="md:col-span-2">
                 <Label htmlFor="address">Address</Label>

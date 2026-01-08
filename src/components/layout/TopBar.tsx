@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { NotificationBell } from './NotificationBell';
 
 interface TopBarProps {
   title?: string;
@@ -51,9 +50,6 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
             {role || 'Employee'}
           </Badge>
         </div>
-
-        {/* Notification Bell */}
-        <NotificationBell />
 
         {/* Logout Button */}
         <Button 

@@ -41,15 +41,18 @@ const AddEmployeePage = () => {
     location: '',
     employmentType: '',
     dateOfBirth: undefined as Date | undefined,
+    birthdayCelebratedOn: undefined as Date | undefined,
     joiningDate: undefined as Date | undefined,
     role: '',
     managerId: '',
     address: '',
     status: true,
+    gender: '',
     emergencyContactName: '',
     emergencyContactPhone: '',
     emergencyContactRelationship: '',
   });
+  const [assignOnboardingTasks, setAssignOnboardingTasks] = useState(true);
 
   // Fetch managers/admins for dropdown and generate employee code
   useEffect(() => {
@@ -239,6 +242,8 @@ const AddEmployeePage = () => {
           location: formData.location?.trim() || null,
           employment_type: formData.employmentType,
           date_of_birth: formData.dateOfBirth ? format(formData.dateOfBirth, 'yyyy-MM-dd') : null,
+          birthday_celebrated_on: formData.birthdayCelebratedOn ? format(formData.birthdayCelebratedOn, 'yyyy-MM-dd') : null,
+          gender: formData.gender || null,
           address: formData.address?.trim() || null,
           emergency_contact_name: formData.emergencyContactName?.trim() || null,
           emergency_contact_phone: formData.emergencyContactPhone?.trim() || null,
@@ -273,22 +278,24 @@ const AddEmployeePage = () => {
         });
       }
 
-      // Step 5: Auto-assign onboarding tasks using database function
+      // Step 5: Auto-assign onboarding tasks using database function (if checkbox is checked)
       let tasksAssigned = false;
-      try {
-        const { error: taskError } = await supabase.rpc(
-          'assign_default_onboarding_tasks',
-          { p_employee_id: employeeData.id }
-        );
+      if (assignOnboardingTasks) {
+        try {
+          const { error: taskError } = await (supabase.rpc as any)(
+            'assign_default_onboarding_tasks',
+            { p_employee_id: employeeData.id }
+          );
 
-        if (taskError) {
-          console.error('Error assigning onboarding tasks:', taskError);
-        } else {
-          tasksAssigned = true;
+          if (taskError) {
+            console.error('Error assigning onboarding tasks:', taskError);
+          } else {
+            tasksAssigned = true;
+          }
+        } catch (onboardingErr) {
+          console.error('Onboarding setup error:', onboardingErr);
+          // Don't fail employee creation if onboarding setup fails
         }
-      } catch (onboardingErr) {
-        console.error('Onboarding setup error:', onboardingErr);
-        // Don't fail employee creation if onboarding setup fails
       }
 
       toast.success(
@@ -435,6 +442,35 @@ const AddEmployeePage = () => {
                   max={format(new Date(), 'yyyy-MM-dd')}
                   min="1940-01-01"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="birthdayCelebratedOn">Birthday Celebrated On</Label>
+                <Input
+                  id="birthdayCelebratedOn"
+                  type="date"
+                  value={formData.birthdayCelebratedOn ? format(formData.birthdayCelebratedOn, 'yyyy-MM-dd') : ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    updateField('birthdayCelebratedOn', val ? new Date(val) : undefined);
+                  }}
+                  max="12-31"
+                  min="01-01"
+                />
+                <p className="text-xs text-muted-foreground">If employee celebrates birthday on a different date</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Gender</Label>
+                <Select value={formData.gender} onValueChange={(value) => updateField('gender', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -634,6 +670,20 @@ const AddEmployeePage = () => {
                 </Select>
               </div>
             </div>
+          </div>
+
+          {/* Onboarding Tasks Checkbox */}
+          <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+            <input
+              type="checkbox"
+              id="assignOnboarding"
+              checked={assignOnboardingTasks}
+              onChange={(e) => setAssignOnboardingTasks(e.target.checked)}
+              className="w-4 h-4 rounded border-border"
+            />
+            <label htmlFor="assignOnboarding" className="text-sm text-foreground cursor-pointer">
+              Assign onboarding tasks to this employee (10 tasks)
+            </label>
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-border">

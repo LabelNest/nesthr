@@ -23,15 +23,15 @@ import { cn } from '@/lib/utils';
 interface OnboardingTask {
   id: string;
   employee_id: string;
-  task_name: string;
-  task_category: string;
-  description: string | null;
-  due_date: string | null;
-  status: string;
+  task_title: string;
+  task_description: string | null;
+  category: string;
+  task_order: number;
+  is_mandatory: boolean | null;
+  status: string | null;
   completed_at: string | null;
-  assigned_by: string;
-  assigned_at: string | null;
-  notes: string | null;
+  document_url: string | null;
+  created_at: string | null;
 }
 
 interface Employee {
@@ -41,21 +41,21 @@ interface Employee {
   joining_date: string | null;
 }
 
-const TASK_CATEGORIES = ['Documentation', 'Profile Setup', 'Training', 'Equipment', 'Access Setup', 'Other'] as const;
+const TASK_CATEGORIES = ['Documents', 'Training', 'Profile Setup', 'Equipment', 'Access Setup', 'Other'] as const;
 
 const categoryIcons: Record<string, React.ElementType> = {
-  'Documentation': FileText,
-  'Profile Setup': UserPlus,
+  'Documents': FileText,
   'Training': BookOpen,
+  'Profile Setup': UserPlus,
   'Equipment': Package,
   'Access Setup': Key,
   'Other': Settings,
 };
 
 const categoryColors: Record<string, string> = {
-  'Documentation': 'bg-blue-100 text-blue-700 border-blue-200',
-  'Profile Setup': 'bg-purple-100 text-purple-700 border-purple-200',
+  'Documents': 'bg-blue-100 text-blue-700 border-blue-200',
   'Training': 'bg-green-100 text-green-700 border-green-200',
+  'Profile Setup': 'bg-purple-100 text-purple-700 border-purple-200',
   'Equipment': 'bg-orange-100 text-orange-700 border-orange-200',
   'Access Setup': 'bg-cyan-100 text-cyan-700 border-cyan-200',
   'Other': 'bg-gray-100 text-gray-700 border-gray-200',
@@ -84,10 +84,10 @@ const OnboardingPage = () => {
   const [completedOpen, setCompletedOpen] = useState(false);
 
   const [newTask, setNewTask] = useState({
-    task_name: '',
-    task_category: 'Documentation',
-    description: '',
-    due_date: undefined as Date | undefined,
+    task_title: '',
+    category: 'Documents',
+    task_description: '',
+    is_mandatory: true,
   });
 
   // Fetch employees for admin dropdown
@@ -131,8 +131,7 @@ const OnboardingPage = () => {
         .from('hr_onboarding_tasks')
         .select('*')
         .eq('employee_id', employeeId)
-        .order('status')
-        .order('due_date', { nullsFirst: false });
+        .order('task_order', { ascending: true });
 
       if (error) throw error;
       setTasks(data || []);
@@ -145,24 +144,27 @@ const OnboardingPage = () => {
   };
 
   const handleCreateTask = async () => {
-    if (!newTask.task_name || !selectedEmployeeId || !employee?.id) return;
+    if (!newTask.task_title || !selectedEmployeeId || !employee?.id) return;
 
     setSaving('create');
     try {
+      // Get max task_order
+      const maxOrder = tasks.reduce((max, t) => Math.max(max, t.task_order), 0);
+      
       const { error } = await supabase.from('hr_onboarding_tasks').insert({
         employee_id: selectedEmployeeId,
-        task_name: newTask.task_name,
-        task_category: newTask.task_category,
-        description: newTask.description || null,
-        due_date: newTask.due_date ? format(newTask.due_date, 'yyyy-MM-dd') : null,
-        assigned_by: employee.id,
+        task_title: newTask.task_title,
+        category: newTask.category,
+        task_description: newTask.task_description || null,
+        is_mandatory: newTask.is_mandatory,
+        task_order: maxOrder + 1,
         status: 'Pending',
       });
 
       if (error) throw error;
 
       toast({ title: 'Task created', description: 'Onboarding task added successfully' });
-      setNewTask({ task_name: '', task_category: 'Documentation', description: '', due_date: undefined });
+      setNewTask({ task_title: '', category: 'Documents', task_description: '', is_mandatory: true });
       setIsDialogOpen(false);
       fetchTasks(selectedEmployeeId);
     } catch (error: any) {
@@ -243,13 +245,11 @@ const OnboardingPage = () => {
   const totalTasks = tasks.length;
   const completedCount = completedTasks.length;
   const progressPercent = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
-  const overdueTasks = tasks.filter(t => t.due_date && isPast(new Date(t.due_date)) && !isToday(new Date(t.due_date)) && t.status !== 'Completed');
 
   const selectedEmployee = employees.find(e => e.id === selectedEmployeeId);
 
   const renderTaskItem = (task: OnboardingTask) => {
-    const Icon = categoryIcons[task.task_category] || Settings;
-    const isOverdue = task.due_date && isPast(new Date(task.due_date)) && !isToday(new Date(task.due_date)) && task.status !== 'Completed';
+    const Icon = categoryIcons[task.category] || Settings;
     const isDisabled = saving === task.id;
 
     return (
@@ -266,27 +266,20 @@ const OnboardingPage = () => {
             "font-medium",
             task.status === 'Completed' ? 'line-through text-muted-foreground' : 'text-foreground'
           )}>
-            {task.task_name}
+            {task.task_title}
           </p>
-          {task.description && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
+          {task.task_description && (
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{task.task_description}</p>
           )}
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            {task.due_date && (
-              <span className={cn(
-                "text-xs flex items-center gap-1",
-                isOverdue ? "text-destructive font-medium" : "text-muted-foreground"
-              )}>
-                <CalendarIcon className="w-3 h-3" />
-                {format(new Date(task.due_date), 'MMM d, yyyy')}
-                {isOverdue && <AlertCircle className="w-3 h-3" />}
-              </span>
+            {task.is_mandatory && (
+              <Badge variant="destructive" className="text-xs">Required</Badge>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Badge variant="outline" className={categoryColors[task.task_category]}>
-            {task.task_category}
+          <Badge variant="outline" className={categoryColors[task.category]}>
+            {task.category}
           </Badge>
           {isAdmin ? (
             <Select 
@@ -378,15 +371,15 @@ const OnboardingPage = () => {
                   <Label>Task Name <span className="text-destructive">*</span></Label>
                   <Input 
                     placeholder="e.g., Complete ID verification" 
-                    value={newTask.task_name}
-                    onChange={(e) => setNewTask({ ...newTask, task_name: e.target.value })}
+                    value={newTask.task_title}
+                    onChange={(e) => setNewTask({ ...newTask, task_title: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Category <span className="text-destructive">*</span></Label>
                   <Select 
-                    value={newTask.task_category} 
-                    onValueChange={(v) => setNewTask({ ...newTask, task_category: v })}
+                    value={newTask.category} 
+                    onValueChange={(v) => setNewTask({ ...newTask, category: v })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -402,40 +395,22 @@ const OnboardingPage = () => {
                   <Label>Description</Label>
                   <Textarea 
                     placeholder="Optional task description..."
-                    value={newTask.description}
-                    onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                    value={newTask.task_description}
+                    onChange={(e) => setNewTask({ ...newTask, task_description: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Due Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !newTask.due_date && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {newTask.due_date ? format(newTask.due_date, 'PPP') : 'Pick a date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={newTask.due_date}
-                        onSelect={(date) => setNewTask({ ...newTask, due_date: date })}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="is_mandatory"
+                    checked={newTask.is_mandatory}
+                    onCheckedChange={(checked) => setNewTask({ ...newTask, is_mandatory: !!checked })}
+                  />
+                  <Label htmlFor="is_mandatory">Required task</Label>
                 </div>
                 <Button 
                   className="w-full" 
                   onClick={handleCreateTask}
-                  disabled={!newTask.task_name || saving === 'create'}
+                  disabled={!newTask.task_title || saving === 'create'}
                 >
                   {saving === 'create' ? 'Creating...' : 'Create Task'}
                 </Button>
@@ -491,12 +466,12 @@ const OnboardingPage = () => {
           </Card>
           <Card className="p-4 glass-card">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-destructive/10">
-                <AlertCircle className="w-5 h-5 text-destructive" />
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <AlertCircle className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{overdueTasks.length}</p>
-                <p className="text-sm text-muted-foreground">Overdue</p>
+                <p className="text-2xl font-bold text-foreground">{inProgressTasks.length}</p>
+                <p className="text-sm text-muted-foreground">In Progress</p>
               </div>
             </div>
           </Card>

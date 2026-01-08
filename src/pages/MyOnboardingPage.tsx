@@ -28,28 +28,30 @@ import { cn } from '@/lib/utils';
 interface OnboardingTask {
   id: string;
   employee_id: string;
-  task_name: string;
-  task_category: string;
-  description: string | null;
-  due_date: string | null;
-  status: string;
+  task_title: string;
+  task_description: string | null;
+  category: string;
+  task_order: number;
+  is_mandatory: boolean | null;
+  status: string | null;
   completed_at: string | null;
-  notes: string | null;
+  document_url: string | null;
+  created_at: string | null;
 }
 
 const categoryIcons: Record<string, React.ElementType> = {
-  'Documentation': FileText,
-  'Profile Setup': User,
+  'Documents': FileText,
   'Training': GraduationCap,
+  'Profile Setup': User,
   'Equipment': Monitor,
   'Access Setup': Key,
   'Other': MoreHorizontal,
 };
 
 const categoryColors: Record<string, string> = {
-  'Documentation': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  'Profile Setup': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+  'Documents': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
   'Training': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+  'Profile Setup': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
   'Equipment': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
   'Access Setup': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
   'Other': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
@@ -81,8 +83,7 @@ const MyOnboardingPage = () => {
         .from('hr_onboarding_tasks')
         .select('*')
         .eq('employee_id', employee?.id)
-        .order('status', { ascending: true })
-        .order('due_date', { ascending: true });
+        .order('task_order', { ascending: true });
 
       if (error) throw error;
       setTasks(data || []);
@@ -155,9 +156,8 @@ const MyOnboardingPage = () => {
   const allCompleted = totalTasks > 0 && completedCount === totalTasks;
 
   const renderTask = (task: OnboardingTask) => {
-    const Icon = categoryIcons[task.task_category] || MoreHorizontal;
+    const Icon = categoryIcons[task.category] || MoreHorizontal;
     const isCompleted = task.status === 'Completed';
-    const isOverdue = task.due_date && !isCompleted && isPast(startOfDay(new Date(task.due_date)));
     const isSaving = savingTaskId === task.id;
 
     return (
@@ -177,29 +177,22 @@ const MyOnboardingPage = () => {
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className={cn("font-medium", isCompleted && "line-through text-muted-foreground")}>
-              {task.task_name}
+              {task.task_title}
             </span>
-            <Badge className={categoryColors[task.task_category] || categoryColors['Other']}>
+            <Badge className={categoryColors[task.category] || categoryColors['Other']}>
               <Icon className="h-3 w-3 mr-1" />
-              {task.task_category}
+              {task.category}
             </Badge>
+            {task.is_mandatory && (
+              <Badge variant="destructive" className="text-xs">Required</Badge>
+            )}
           </div>
           
-          {task.description && (
-            <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+          {task.task_description && (
+            <p className="text-sm text-muted-foreground mt-1">{task.task_description}</p>
           )}
           
           <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
-            {task.due_date && (
-              <div className={cn(
-                "flex items-center gap-1",
-                isOverdue ? "text-destructive" : "text-muted-foreground"
-              )}>
-                {isOverdue && <AlertTriangle className="h-3 w-3" />}
-                <Calendar className="h-3 w-3" />
-                <span>Due: {format(new Date(task.due_date), 'MMM d, yyyy')}</span>
-              </div>
-            )}
             {task.completed_at && (
               <span className="text-muted-foreground">
                 Completed: {format(new Date(task.completed_at), 'MMM d, yyyy')}
