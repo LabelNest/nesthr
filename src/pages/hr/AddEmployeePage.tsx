@@ -180,28 +180,24 @@ const AddEmployeePage = () => {
       const emailLower = emailToUse.toLowerCase().trim();
       const password = generatedCode; // Use employee code as initial password
 
-      // Step 1: Create Supabase Auth account via edge function
-      const { data: authResponse, error: authFunctionError } = await supabase.functions.invoke(
-        'admin-manage-user',
-        {
-          body: {
-            action: 'create',
-            email: emailLower,
-            password: password,
+      // Step 1: Create Supabase Auth account via client-side signUp
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: emailLower,
+        password: password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
             full_name: formData.fullName.trim(),
-          },
+            employee_code: generatedCode
+          }
         }
-      );
+      });
 
-      if (authFunctionError) {
-        throw new Error(`Auth creation failed: ${authFunctionError.message}`);
+      if (authError) {
+        throw new Error(`Auth creation failed: ${authError.message}`);
       }
 
-      if (authResponse?.error) {
-        throw new Error(`Auth creation failed: ${authResponse.error}`);
-      }
-
-      const authUserId = authResponse?.user?.id;
+      const authUserId = authData?.user?.id;
       if (!authUserId) {
         throw new Error('Auth user was not created properly');
       }
@@ -224,10 +220,8 @@ const AddEmployeePage = () => {
         .single();
 
       if (employeeError) {
-        // Rollback: delete auth user
-        await supabase.functions.invoke('admin-manage-user', {
-          body: { action: 'delete', user_id: authUserId },
-        });
+        // Note: Cannot delete auth user from client-side, but employee record failed
+        console.error('Employee creation failed, auth user may be orphaned:', authUserId);
         throw new Error(`Employee creation failed: ${employeeError.message}`);
       }
 
@@ -251,11 +245,8 @@ const AddEmployeePage = () => {
         });
 
       if (detailsError) {
-        // Rollback: delete employee record and auth user
+        // Rollback: delete employee record (auth user cleanup would need admin)
         await supabase.from('hr_employees').delete().eq('id', employeeData.id);
-        await supabase.functions.invoke('admin-manage-user', {
-          body: { action: 'delete', user_id: authUserId },
-        });
         throw new Error(`Details creation failed: ${detailsError.message}`);
       }
 
